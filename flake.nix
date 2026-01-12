@@ -92,7 +92,7 @@
           stylua
 
           # Nix
-          nixfmt-rfc-style
+          nixfmt
           alejandra
 
           # Python
@@ -197,22 +197,26 @@
           mkdir -p "$XDG_CONFIG_HOME/nvim/lua/plugins"
           mkdir -p "$XDG_CONFIG_HOME/nvim/lua/config"
           mkdir -p "$XDG_DATA_HOME/nvim"
+          mkdir -p "$XDG_DATA_HOME/nvim/lazy"
+
+          # Add path to dependencies FIRST
+          export PATH="${pkgs.lib.makeBinPath allDeps}:$PATH"
+
+          # Bootstrap lazy.nvim if it doesn't exist
+          LAZY_PATH="$XDG_DATA_HOME/nvim/lazy/lazy.nvim"
+          if [ ! -d "$LAZY_PATH" ]; then
+            echo "Bootstrapping lazy.nvim..."
+            ${pkgs.git}/bin/git clone --filter=blob:none \
+              https://github.com/folke/lazy.nvim.git \
+              --branch=stable \
+              "$LAZY_PATH"
+          fi
 
           # Create initial config if it doesn't exist
           if [ ! -f "$XDG_CONFIG_HOME/nvim/init.lua" ]; then
             cat > "$XDG_CONFIG_HOME/nvim/init.lua" << 'INIT_EOF'
 -- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
-  vim.fn.system({
-    "git",
-    "clone",
-    "--filter=blob:none",
-    "https://github.com/folke/lazy.nvim.git",
-    "--branch=stable",
-    lazypath,
-  })
-end
 vim.opt.rtp:prepend(lazypath)
 
 -- Setup lazy.nvim
@@ -326,9 +330,6 @@ vim.opt.scrolloff = 10
 OPTIONS_EOF
           fi
 
-          # Add path to dependencies
-          export PATH="${pkgs.lib.makeBinPath allDeps}:$PATH"
-
           # Run neovim
           exec ${neovimPackage}/bin/nvim "$@"
         '';
@@ -372,7 +373,7 @@ OPTIONS_EOF
           '';
         };
 
-        formatter = pkgs.nixfmt-rfc-style;
+        formatter = pkgs.nixfmt;
       }
     );
 }
