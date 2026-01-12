@@ -187,6 +187,10 @@
           export FONTCONFIG_FILE=${pkgs.fontconfig.out}/etc/fonts/fonts.conf
           export FONTCONFIG_PATH=${victorMonoNerdFont}/share/fonts
 
+          # Set SSL certificate path for git
+          export GIT_SSL_CAINFO=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+          export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+
           # Set XDG directories if not set
           export XDG_CONFIG_HOME=''${XDG_CONFIG_HOME:-$HOME/.config}
           export XDG_DATA_HOME=''${XDG_DATA_HOME:-$HOME/.local/share}
