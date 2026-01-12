@@ -92,7 +92,7 @@
           stylua
 
           # Nix
-          nixfmt
+          nixfmt-rfc-style
           alejandra
 
           # Python
@@ -175,61 +175,11 @@
         # All dependencies combined
         allDeps = coreDeps ++ lspServers ++ formatters ++ linters ++ debuggers ++ additionalTools ++ [ treesitterCLI ];
 
-        # Neovim with plugins and configuration
-        neovimConfig = pkgs.neovim.override {
-          viAlias = true;
-          vimAlias = true;
+        # Neovim package (just the base editor)
+        neovimPackage = pkgs.neovim.override {
           withNodeJs = true;
           withPython3 = true;
           withRuby = false;
-
-          configure = {
-            customRC = ''
-              lua << EOF
-              -- Bootstrap lazy.nvim
-              local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-              if not vim.loop.fs_stat(lazypath) then
-                vim.fn.system({
-                  "git",
-                  "clone",
-                  "--filter=blob:none",
-                  "https://github.com/folke/lazy.nvim.git",
-                  "--branch=stable",
-                  lazypath,
-                })
-              end
-              vim.opt.rtp:prepend(lazypath)
-
-              -- Setup lazy.nvim with LazyVim
-              require("lazy").setup({
-                spec = {
-                  -- Import LazyVim
-                  { "LazyVim/LazyVim", import = "lazyvim.plugins" },
-                  
-                  -- Import your custom plugins from lua/plugins
-                  { import = "plugins" },
-                },
-                defaults = {
-                  lazy = false,
-                  version = false,
-                },
-                install = { colorscheme = { "tokyonight", "habamax" } },
-                checker = { enabled = true },
-                performance = {
-                  rtp = {
-                    disabled_plugins = {
-                      "gzip",
-                      "tarPlugin",
-                      "tohtml",
-                      "tutor",
-                      "zipPlugin",
-                    },
-                  },
-                },
-              })
-              EOF
-            '';
-          };
         };
 
         # Wrapper script that sets up fonts and environment
@@ -243,8 +193,10 @@
           export XDG_STATE_HOME=''${XDG_STATE_HOME:-$HOME/.local/state}
           export XDG_CACHE_HOME=''${XDG_CACHE_HOME:-$HOME/.cache}
 
-          # Ensure nvim config directory exists
+          # Ensure nvim directories exist
           mkdir -p "$XDG_CONFIG_HOME/nvim/lua/plugins"
+          mkdir -p "$XDG_CONFIG_HOME/nvim/lua/config"
+          mkdir -p "$XDG_DATA_HOME/nvim"
 
           # Create initial config if it doesn't exist
           if [ ! -f "$XDG_CONFIG_HOME/nvim/init.lua" ]; then
@@ -317,15 +269,12 @@ FONT_EOF
 
           # Create options file with VictorMono font if it doesn't exist
           if [ ! -f "$XDG_CONFIG_HOME/nvim/lua/config/options.lua" ]; then
-            mkdir -p "$XDG_CONFIG_HOME/nvim/lua/config"
             cat > "$XDG_CONFIG_HOME/nvim/lua/config/options.lua" << 'OPTIONS_EOF'
 -- Options are automatically loaded before lazy.nvim startup
--- Default options that are always set: https://github.com/LazyVim/LazyVim/blob/main/lua/lazyvim/config/options.lua
-
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
 
--- Font configuration
+-- Font configuration (for GUI clients)
 vim.opt.guifont = "VictorMono Nerd Font:h14"
 
 -- Enable italic comments and keywords
@@ -381,14 +330,21 @@ OPTIONS_EOF
           export PATH="${pkgs.lib.makeBinPath allDeps}:$PATH"
 
           # Run neovim
-          exec ${neovimConfig}/bin/nvim "$@"
+          exec ${neovimPackage}/bin/nvim "$@"
         '';
+
+        # Build a combined package with all tools
+        lazyVimPackage = pkgs.buildEnv {
+          name = "lazyvim-with-tools";
+          paths = [ lazyVimWrapper ] ++ allDeps ++ [ victorMonoNerdFont ];
+        };
 
       in
       {
         packages = {
-          default = lazyVimWrapper;
-          neovim = neovimConfig;
+          default = lazyVimPackage;
+          lvim = lazyVimWrapper;
+          neovim = neovimPackage;
         };
 
         apps.default = {
@@ -397,7 +353,7 @@ OPTIONS_EOF
         };
 
         devShells.default = pkgs.mkShell {
-          buildInputs = [ lazyVimWrapper victorMonoNerdFont ] ++ allDeps;
+          buildInputs = [ lazyVimPackage ];
           
           shellHook = ''
             echo "LazyVim development environment"
@@ -416,7 +372,7 @@ OPTIONS_EOF
           '';
         };
 
-        formatter = pkgs.nixfmt;
+        formatter = pkgs.nixfmt-rfc-style;
       }
     );
 }
