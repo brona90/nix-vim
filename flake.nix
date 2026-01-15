@@ -14,6 +14,9 @@
           config.allowUnfree = true;
         };
 
+        isDarwin = pkgs.stdenv.isDarwin;
+        isLinux = pkgs.stdenv.isLinux;
+
         # VictorMono Nerd Font
         victorMonoNerdFont = pkgs.nerd-fonts.victor-mono;
 
@@ -32,16 +35,15 @@
           fd
           fzf
 
-          # Clipboard support
-          xclip
-          wl-clipboard
-
           # Build tools
-          gcc
           gnumake
           cmake
           pkg-config
-        ];
+        ] 
+        # Clipboard support - platform specific
+        ++ (if isLinux then [ xclip wl-clipboard ] else [])
+        # GCC only on Linux, use clang on Darwin
+        ++ (if isLinux then [ gcc ] else []);
 
         # Language servers
         lspServers = with pkgs; [
