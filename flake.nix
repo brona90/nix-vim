@@ -273,6 +273,10 @@
             name = "blink.cmp";
             path = vp.blink-cmp;
           }
+          {
+            name = "sqlite.lua";
+            path = vp.sqlite-lua;
+          }
         ];
 
         # Core dependencies for LazyVim
@@ -309,8 +313,7 @@
         # Language servers
         lspServers = with pkgs; [
           lua-language-server
-          nil
-          nixd
+          nil # lighter than nixd
           pyright
           ruff
           nodePackages.typescript-language-server
@@ -334,9 +337,7 @@
           black
           isort
           nodePackages.prettier
-          gotools
           gofumpt
-          rustfmt
           shfmt
           taplo
         ];
@@ -364,7 +365,6 @@
           tree
           nodejs_22
           python3
-          cargo
         ];
 
         treesitterCLI = pkgs.tree-sitter;
@@ -405,6 +405,9 @@
 
           # Add path to dependencies
           export PATH="${pkgs.lib.makeBinPath allDeps}:$PATH"
+
+          # Set sqlite library path for sqlite.lua
+          export LIBSQLITE="${pkgs.sqlite.out}/lib/libsqlite3.so"
 
           # Symlink pre-fetched plugins if not already done
           for plugin in ${pluginsDir}/*; do
