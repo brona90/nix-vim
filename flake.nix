@@ -1,5 +1,5 @@
 {
-  description = "LazyVim configuration with Nix";
+  description = "LazyVim configuration with Nix (immutable)";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -26,171 +26,349 @@
         # VictorMono Nerd Font
         victorMonoNerdFont = pkgs.nerd-fonts.victor-mono;
 
+        # Nvim config from repo (immutable)
+        nvimConfig = pkgs.stdenv.mkDerivation {
+          name = "nvim-config";
+          src = ./nvim-config;
+          dontBuild = true;
+          installPhase = ''
+            mkdir -p $out
+            cp -r $src/. $out/
+          '';
+        };
+
+        # Pre-fetch lazy.nvim (plugin manager)
+        lazyNvim = pkgs.fetchFromGitHub {
+          owner = "folke";
+          repo = "lazy.nvim";
+          rev = "v11.16.2";
+          sha256 = "sha256-48i6Z6cwccjd5rRRuIyuuFS68J0lAIAEEiSBJ4Vq5vY=";
+        };
+
+        # Pre-fetch LazyVim distribution
+        lazyVimDistro = pkgs.fetchFromGitHub {
+          owner = "LazyVim";
+          repo = "LazyVim";
+          rev = "v15.13.0";
+          sha256 = "sha256-pm1B4tdHqSV8n+hM78asqw5WNdMfC5fUSiZcjg8ZtAg=";
+        };
+
+        # Use vimPlugins from nixpkgs where available (already has correct hashes)
+        vp = pkgs.vimPlugins;
+
+        # Build the plugins directory using nixpkgs vimPlugins
+        pluginsDir = pkgs.linkFarm "lazy-plugins" [
+          {
+            name = "lazy.nvim";
+            path = lazyNvim;
+          }
+          {
+            name = "LazyVim";
+            path = lazyVimDistro;
+          }
+          # UI
+          {
+            name = "tokyonight.nvim";
+            path = vp.tokyonight-nvim;
+          }
+          {
+            name = "catppuccin";
+            path = vp.catppuccin-nvim;
+          }
+          {
+            name = "which-key.nvim";
+            path = vp.which-key-nvim;
+          }
+          {
+            name = "noice.nvim";
+            path = vp.noice-nvim;
+          }
+          {
+            name = "nui.nvim";
+            path = vp.nui-nvim;
+          }
+          {
+            name = "nvim-notify";
+            path = vp.nvim-notify;
+          }
+          {
+            name = "mini.icons";
+            path = vp.mini-icons;
+          }
+          {
+            name = "dressing.nvim";
+            path = vp.dressing-nvim;
+          }
+          {
+            name = "bufferline.nvim";
+            path = vp.bufferline-nvim;
+          }
+          {
+            name = "lualine.nvim";
+            path = vp.lualine-nvim;
+          }
+          {
+            name = "indent-blankline.nvim";
+            path = vp.indent-blankline-nvim;
+          }
+          {
+            name = "mini.indentscope";
+            path = vp.mini-indentscope;
+          }
+          {
+            name = "dashboard-nvim";
+            path = vp.dashboard-nvim;
+          }
+          # Editor
+          {
+            name = "neo-tree.nvim";
+            path = vp.neo-tree-nvim;
+          }
+          {
+            name = "nvim-spectre";
+            path = vp.nvim-spectre;
+          }
+          {
+            name = "telescope.nvim";
+            path = vp.telescope-nvim;
+          }
+          {
+            name = "telescope-fzf-native.nvim";
+            path = vp.telescope-fzf-native-nvim;
+          }
+          {
+            name = "flash.nvim";
+            path = vp.flash-nvim;
+          }
+          {
+            name = "gitsigns.nvim";
+            path = vp.gitsigns-nvim;
+          }
+          {
+            name = "vim-illuminate";
+            path = vp.vim-illuminate;
+          }
+          {
+            name = "mini.bufremove";
+            path = vp.mini-bufremove;
+          }
+          {
+            name = "trouble.nvim";
+            path = vp.trouble-nvim;
+          }
+          {
+            name = "todo-comments.nvim";
+            path = vp.todo-comments-nvim;
+          }
+          # Treesitter
+          {
+            name = "nvim-treesitter";
+            path = vp.nvim-treesitter.withAllGrammars;
+          }
+          {
+            name = "nvim-treesitter-textobjects";
+            path = vp.nvim-treesitter-textobjects;
+          }
+          {
+            name = "nvim-ts-autotag";
+            path = vp.nvim-ts-autotag;
+          }
+          # LSP
+          {
+            name = "nvim-lspconfig";
+            path = vp.nvim-lspconfig;
+          }
+          {
+            name = "mason.nvim";
+            path = vp.mason-nvim;
+          }
+          {
+            name = "mason-lspconfig.nvim";
+            path = vp.mason-lspconfig-nvim;
+          }
+          {
+            name = "neoconf.nvim";
+            path = vp.neoconf-nvim;
+          }
+          {
+            name = "lazydev.nvim";
+            path = vp.lazydev-nvim;
+          }
+          # Completion
+          {
+            name = "nvim-cmp";
+            path = vp.nvim-cmp;
+          }
+          {
+            name = "cmp-nvim-lsp";
+            path = vp.cmp-nvim-lsp;
+          }
+          {
+            name = "cmp-buffer";
+            path = vp.cmp-buffer;
+          }
+          {
+            name = "cmp-path";
+            path = vp.cmp-path;
+          }
+          {
+            name = "LuaSnip";
+            path = vp.luasnip;
+          }
+          {
+            name = "friendly-snippets";
+            path = vp.friendly-snippets;
+          }
+          # Formatting & Linting
+          {
+            name = "conform.nvim";
+            path = vp.conform-nvim;
+          }
+          {
+            name = "nvim-lint";
+            path = vp.nvim-lint;
+          }
+          # Utilities
+          {
+            name = "plenary.nvim";
+            path = vp.plenary-nvim;
+          }
+          {
+            name = "nvim-web-devicons";
+            path = vp.nvim-web-devicons;
+          }
+          {
+            name = "persistence.nvim";
+            path = vp.persistence-nvim;
+          }
+          {
+            name = "mini.pairs";
+            path = vp.mini-pairs;
+          }
+          {
+            name = "mini.ai";
+            path = vp.mini-ai;
+          }
+          {
+            name = "mini.surround";
+            path = vp.mini-surround;
+          }
+          {
+            name = "mini.comment";
+            path = vp.mini-comment;
+          }
+          {
+            name = "vim-startuptime";
+            path = vp.vim-startuptime;
+          }
+          {
+            name = "snacks.nvim";
+            path = vp.snacks-nvim;
+          }
+          {
+            name = "ts-comments.nvim";
+            path = vp.ts-comments-nvim;
+          }
+          {
+            name = "blink.cmp";
+            path = vp.blink-cmp;
+          }
+        ];
+
         # Core dependencies for LazyVim
         coreDeps =
           with pkgs;
           [
-            # Essential tools
             git
             curl
             wget
             unzip
             gnutar
             gzip
-
-            # Search tools (required by Telescope)
             ripgrep
             fd
             fzf
-
-            # Build tools
             gnumake
             cmake
             pkg-config
+            # Additional tools for clean health check
+            sqlite # for Snacks.picker frecency
+            ast-grep # for grug-far extended capabilities
           ]
-          # Clipboard support - platform specific
           ++ (
             if isLinux then
               [
                 xclip
                 wl-clipboard
+                gcc
               ]
             else
               [ ]
-          )
-          # GCC only on Linux, use clang on Darwin
-          ++ (if isLinux then [ gcc ] else [ ]);
+          );
 
         # Language servers
         lspServers = with pkgs; [
-          # Lua
           lua-language-server
-
-          # Nix
           nil
           nixd
-
-          # Python
           pyright
           ruff
-
-          # JavaScript/TypeScript
           nodePackages.typescript-language-server
-          nodePackages.vscode-langservers-extracted # HTML, CSS, JSON, ESLint
-
-          # Go
+          nodePackages.vscode-langservers-extracted
           gopls
           delve
-
-          # Rust
           rust-analyzer
-
-          # Bash
           nodePackages.bash-language-server
-
-          # YAML
           yaml-language-server
-
-          # TOML
           taplo
-
-          # Markdown
           marksman
-
-          # Docker
           dockerfile-language-server
-
-          # Terraform
           terraform-ls
         ];
 
         # Formatters
         formatters = with pkgs; [
-          # Lua
           stylua
-
-          # Nix
           nixfmt
           alejandra
-
-          # Python
           black
           isort
-
-          # JavaScript/TypeScript
           nodePackages.prettier
-
-          # Go
           gotools
           gofumpt
-
-          # Rust
           rustfmt
-
-          # Shell
           shfmt
-
-          # TOML
           taplo
-
-          # YAML
-          nodePackages.prettier
-
-          # Markdown
-          nodePackages.prettier
         ];
 
         # Linters
         linters = with pkgs; [
-          # Python
           ruff
           pylint
-
-          # JavaScript/TypeScript
           nodePackages.eslint
-
-          # Shell
           shellcheck
-
-          # Markdown
           markdownlint-cli
-
-          # YAML
           yamllint
         ];
 
         # Debuggers
         debuggers = with pkgs; [
-          # Python
           python3Packages.debugpy
-
-          # Go
           delve
         ];
 
         # Additional tools
         additionalTools = with pkgs; [
-          # Git integration
           lazygit
           delta
-
-          # Terminal
           tree
-
-          # Node.js (for many LSP servers and tools)
           nodejs_22
-
-          # Python (for debugpy and other tools)
           python3
-
-          # Cargo (for Rust tools)
           cargo
         ];
 
-        # Tree-sitter CLI for parser management
         treesitterCLI = pkgs.tree-sitter;
 
-        # All dependencies combined
         allDeps =
           coreDeps
           ++ lspServers
@@ -200,170 +378,47 @@
           ++ additionalTools
           ++ [ treesitterCLI ];
 
-        # Neovim package (just the base editor)
         neovimPackage = pkgs.neovim.override {
           withNodeJs = true;
           withPython3 = true;
           withRuby = false;
         };
 
-        # Wrapper script that sets up fonts and environment
+        # Wrapper that uses immutable config and pre-fetched plugins
         lazyVimWrapper = pkgs.writeShellScriptBin "lvim" ''
-                    export FONTCONFIG_FILE=${pkgs.fontconfig.out}/etc/fonts/fonts.conf
-                    export FONTCONFIG_PATH=${victorMonoNerdFont}/share/fonts
+          export FONTCONFIG_FILE=${pkgs.fontconfig.out}/etc/fonts/fonts.conf
+          export FONTCONFIG_PATH=${victorMonoNerdFont}/share/fonts
 
-                    # Set SSL certificate path for git
-                    export GIT_SSL_CAINFO=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
-                    export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+          # Set SSL certificate path for git
+          export GIT_SSL_CAINFO=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
+          export SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt
 
-                    # Set XDG directories if not set
-                    export XDG_CONFIG_HOME=''${XDG_CONFIG_HOME:-$HOME/.config}
-                    export XDG_DATA_HOME=''${XDG_DATA_HOME:-$HOME/.local/share}
-                    export XDG_STATE_HOME=''${XDG_STATE_HOME:-$HOME/.local/state}
-                    export XDG_CACHE_HOME=''${XDG_CACHE_HOME:-$HOME/.cache}
+          # Use XDG directories for mutable data
+          export XDG_DATA_HOME=''${XDG_DATA_HOME:-$HOME/.local/share}
+          export XDG_STATE_HOME=''${XDG_STATE_HOME:-$HOME/.local/state}
+          export XDG_CACHE_HOME=''${XDG_CACHE_HOME:-$HOME/.cache}
 
-                    # Ensure nvim directories exist
-                    mkdir -p "$XDG_CONFIG_HOME/nvim/lua/plugins"
-                    mkdir -p "$XDG_CONFIG_HOME/nvim/lua/config"
-                    mkdir -p "$XDG_DATA_HOME/nvim"
-                    mkdir -p "$XDG_DATA_HOME/nvim/lazy"
+          # Ensure directories exist
+          mkdir -p "$XDG_DATA_HOME/nvim/lazy"
+          mkdir -p "$XDG_STATE_HOME/nvim"
+          mkdir -p "$XDG_CACHE_HOME/nvim"
 
-                    # Add path to dependencies FIRST
-                    export PATH="${pkgs.lib.makeBinPath allDeps}:$PATH"
+          # Add path to dependencies
+          export PATH="${pkgs.lib.makeBinPath allDeps}:$PATH"
 
-                    # Bootstrap lazy.nvim if it doesn't exist
-                    LAZY_PATH="$XDG_DATA_HOME/nvim/lazy/lazy.nvim"
-                    if [ ! -d "$LAZY_PATH" ]; then
-                      echo "Bootstrapping lazy.nvim..."
-                      ${pkgs.git}/bin/git clone --filter=blob:none \
-                        https://github.com/folke/lazy.nvim.git \
-                        --branch=stable \
-                        "$LAZY_PATH"
-                    fi
+          # Symlink pre-fetched plugins if not already done
+          for plugin in ${pluginsDir}/*; do
+            name=$(basename "$plugin")
+            target="$XDG_DATA_HOME/nvim/lazy/$name"
+            if [ ! -e "$target" ]; then
+              ln -sf "$plugin" "$target"
+            fi
+          done
 
-                    # Create initial config if it doesn't exist
-                    if [ ! -f "$XDG_CONFIG_HOME/nvim/init.lua" ]; then
-                      cat > "$XDG_CONFIG_HOME/nvim/init.lua" << 'INIT_EOF'
-          -- Bootstrap lazy.nvim
-          local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-          vim.opt.rtp:prepend(lazypath)
-
-          -- Setup lazy.nvim
-          require("lazy").setup({
-            spec = {
-              { "LazyVim/LazyVim", import = "lazyvim.plugins" },
-              { import = "plugins" },
-            },
-            defaults = {
-              lazy = false,
-              version = false,
-            },
-            install = { colorscheme = { "tokyonight", "habamax" } },
-            checker = { enabled = true },
-            performance = {
-              rtp = {
-                disabled_plugins = {
-                  "gzip",
-                  "tarPlugin",
-                  "tohtml",
-                  "tutor",
-                  "zipPlugin",
-                },
-              },
-            },
-          })
-          INIT_EOF
-                    fi
-
-                    # Create font configuration if it doesn't exist
-                    if [ ! -f "$XDG_CONFIG_HOME/nvim/lua/plugins/fonts.lua" ]; then
-                      cat > "$XDG_CONFIG_HOME/nvim/lua/plugins/fonts.lua" << 'FONT_EOF'
-          return {
-            {
-              "LazyVim/LazyVim",
-              opts = {
-                colorscheme = "tokyonight",
-              },
-            },
-            {
-              "folke/tokyonight.nvim",
-              opts = {
-                style = "night",
-                transparent = false,
-                styles = {
-                  comments = { italic = true },
-                  keywords = { italic = true },
-                },
-              },
-            },
-          }
-          FONT_EOF
-                    fi
-
-                    # Create options file with VictorMono font if it doesn't exist
-                    if [ ! -f "$XDG_CONFIG_HOME/nvim/lua/config/options.lua" ]; then
-                      cat > "$XDG_CONFIG_HOME/nvim/lua/config/options.lua" << 'OPTIONS_EOF'
-          -- Options are automatically loaded before lazy.nvim startup
-          vim.g.mapleader = " "
-          vim.g.maplocalleader = "\\"
-
-          -- Font configuration (for GUI clients)
-          vim.opt.guifont = "VictorMono Nerd Font:h14"
-
-          -- Enable italic comments and keywords
-          vim.cmd([[
-            highlight Comment cterm=italic gui=italic
-            highlight Keyword cterm=italic gui=italic
-          ]])
-
-          -- Line numbers
-          vim.opt.number = true
-          vim.opt.relativenumber = true
-
-          -- Enable mouse
-          vim.opt.mouse = "a"
-
-          -- Sync clipboard between OS and Neovim
-          vim.opt.clipboard = "unnamedplus"
-
-          -- Enable break indent
-          vim.opt.breakindent = true
-
-          -- Save undo history
-          vim.opt.undofile = true
-
-          -- Case-insensitive searching UNLESS \C or capital in search
-          vim.opt.ignorecase = true
-          vim.opt.smartcase = true
-
-          -- Decrease update time
-          vim.opt.updatetime = 250
-          vim.opt.timeoutlen = 300
-
-          -- Configure how new splits should be opened
-          vim.opt.splitright = true
-          vim.opt.splitbelow = true
-
-          -- Sets how neovim will display certain whitespace characters
-          vim.opt.list = true
-          vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
-
-          -- Preview substitutions live
-          vim.opt.inccommand = 'split'
-
-          -- Show which line your cursor is on
-          vim.opt.cursorline = true
-
-          -- Minimal number of screen lines to keep above and below the cursor
-          vim.opt.scrolloff = 10
-          OPTIONS_EOF
-                    fi
-
-                    # Run neovim
-                    exec ${neovimPackage}/bin/nvim "$@"
+          # Run neovim with immutable config from Nix store
+          exec ${neovimPackage}/bin/nvim -u "${nvimConfig}/init.lua" "$@"
         '';
 
-        # Build a combined package with all tools
         lazyVimPackage = pkgs.buildEnv {
           name = "lazyvim-with-tools";
           paths = [ lazyVimWrapper ] ++ allDeps ++ [ victorMonoNerdFont ];
@@ -386,19 +441,12 @@
           buildInputs = [ lazyVimPackage ];
 
           shellHook = ''
-            echo "LazyVim development environment"
-            echo "Run 'lvim' to start LazyVim"
+            echo "LazyVim environment (immutable config + pre-fetched plugins)"
             echo ""
-            echo "Included tools:"
-            echo "  - Neovim with LazyVim"
-            echo "  - LSP servers for: Lua, Nix, Python, JS/TS, Go, Rust, Bash, YAML, Markdown, Docker, Terraform"
-            echo "  - Formatters: stylua, nixfmt, black, prettier, gofumpt, rustfmt, shfmt"
-            echo "  - Linters: ruff, pylint, eslint, shellcheck, markdownlint, yamllint"
-            echo "  - Debuggers: debugpy, delve"
-            echo "  - Additional: lazygit, ripgrep, fd, fzf, tree-sitter"
-            echo "  - Font: VictorMono Nerd Font"
-            echo ""
-            echo "Configuration directory: ~/.config/nvim"
+            echo "Config is managed by Nix. To change config:"
+            echo "  1. Edit nvim-config/"
+            echo "  2. nix build && commit && push"
+            echo "  3. nfu && hms on target machine"
           '';
         };
 
